@@ -80,6 +80,37 @@ class SudokuRenderer:
                 line_thickness
             )
 
+    def draw_blurred_grid(self, surface: pygame.Surface):
+        """Малює розмиту сітку для стану паузи"""
+        # Створюємо напівпрозорий overlay
+        overlay = pygame.Surface((GRID_SIZE * self.cell_size, GRID_SIZE * self.cell_size))
+        overlay.set_alpha(200)
+        overlay.fill(GRAY)
+
+        # Малюємо основну структуру сітки без значень
+        for i in range(GRID_SIZE + 1):
+            line_thickness = 3 if i % SUB_GRID_SIZE == 0 else 1
+
+            # Горизонтальні лінії
+            pygame.draw.line(
+                overlay,
+                BLACK,
+                (0, i * self.cell_size),
+                (GRID_SIZE * self.cell_size, i * self.cell_size),
+                line_thickness
+            )
+
+            # Вертикальні лінії
+            pygame.draw.line(
+                overlay,
+                BLACK,
+                (i * self.cell_size, 0),
+                (i * self.cell_size, GRID_SIZE * self.cell_size),
+                line_thickness
+            )
+
+        surface.blit(overlay, (0, 0))
+
     def draw_buttons(self, surface: pygame.Surface, buttons: Dict):
         """Малює кнопки керування грою"""
         for button_name, button in buttons.items():
@@ -87,6 +118,36 @@ class SudokuRenderer:
             pygame.draw.rect(surface, BLUE, rect)
             pygame.draw.rect(surface, BLACK, rect, 2)  # Рамка кнопки
             surface.blit(text, text.get_rect(center=rect.center))
+
+    def draw_timer(self, surface: pygame.Surface, time_str: str):
+        """Малює таймер"""
+        timer_text = self.font.render(f"Час: {time_str}", True, BLACK)
+        timer_rect = timer_text.get_rect()
+        timer_rect.topright = (WINDOW_SIZE[0] - 10, 10)
+        surface.blit(timer_text, timer_rect)
+
+    def draw_pause_message(self, surface: pygame.Surface):
+        """Малює повідомлення про паузу"""
+        # Створюємо напівпрозорий фон для повідомлення
+        message_bg = pygame.Surface((400, 150))
+        message_bg.set_alpha(220)
+        message_bg.fill(WHITE)
+
+        message_rect = message_bg.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
+        surface.blit(message_bg, message_rect)
+
+        # Рамка навколо повідомлення
+        pygame.draw.rect(surface, BLACK, message_rect, 3)
+
+        # Текст повідомлення
+        pause_text = self.font.render("ПАУЗА", True, BLACK)
+        pause_rect = pause_text.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 - 20))
+        surface.blit(pause_text, pause_rect)
+
+        # Інструкція
+        instruction_text = self.small_font.render("Натисніть 'P' або 'Пробіл' для продовження", True, BLACK)
+        instruction_rect = instruction_text.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 20))
+        surface.blit(instruction_text, instruction_rect)
 
     def draw_game_over(self, surface: pygame.Surface):
         """Малює повідомлення про завершення гри"""

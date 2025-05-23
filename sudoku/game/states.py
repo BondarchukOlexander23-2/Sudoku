@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import pygame
 from typing import TYPE_CHECKING
 
-from ..config import GRID_SIZE, CELL_SIZE, BLACK, WHITE
+from ..config import GRID_SIZE, CELL_SIZE, BLACK, WHITE, WINDOW_SIZE
 from ..models import Difficulty
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ class IGameState(ABC):
 
     @abstractmethod
     def render(self, surface: pygame.Surface, game: 'Game') -> None:
-        """Відображує стан гри"""
+        """Відображає стан гри"""
         pass
 
 
@@ -59,6 +59,8 @@ class PlayingState(IGameState):
             game.use_hint()
         elif button_name == "auto_notes":
             game.board.auto_notes()
+        elif button_name == "pause":
+            game.pause_game()
         elif button_name == "difficulty":
             # Циклічна зміна складності
             difficulties = list(Difficulty)
@@ -105,10 +107,13 @@ class PlayingState(IGameState):
             game.use_hint()
         elif key == pygame.K_a:  # Автозаповнення заміток
             game.board.auto_notes()
+        elif key == pygame.K_p or key == pygame.K_SPACE:  # Пауза
+            game.pause_game()
 
     def update(self, game: 'Game') -> None:
         """Оновлення стану гри"""
-        pass
+        # Оновлюємо таймер тільки якщо гра не на паузі
+        game.timer.update()
 
     def render(self, surface: pygame.Surface, game: 'Game') -> None:
         """Відображення стану гри"""
@@ -119,6 +124,64 @@ class PlayingState(IGameState):
 
         # Відображення кнопок
         game.renderer.draw_buttons(surface, game.button_manager.buttons)
+
+        # Відображення таймеру
+        game.renderer.draw_timer(surface, game.timer.get_formatted_time())
+
+        # Відображення кількості використаних підказок
+        hints_text = game.small_font.render(
+            f"Підказки: {game.board.hints_used}/{game.board.max_hints}",
+            True, BLACK
+        )
+        surface.blit(hints_text, (10, game.window_size[1] - 30))
+
+
+class PausedState(IGameState):
+    """Стан гри на паузі"""
+    def handle_event(self, event: pygame.event.Event, game: 'Game') -> None:
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            x, y = pygame.mouse.get_pos()
+
+            # Перевірка натискання на кнопки (тільки пауза та нова гра)
+            clicked_button = game.button_manager.get_clicked_button(x, y)
+            if clicked_button == "pause":
+                game.resume_game()
+            elif clicked_button == "new_game":
+                game.new_game()
+            elif clicked_button == "difficulty":
+                # Циклічна зміна складності
+                difficulties = list(Difficulty)
+                current_index = difficulties.index(game.difficulty)
+                next_index = (current_index + 1) % len(difficulties)
+                game.difficulty = difficulties[next_index]
+                game.button_manager.update_difficulty_button(game.difficulty.name)
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p or event.key == pygame.K_SPACE:
+                game.resume_game()
+            elif event.key == pygame.K_n:
+                game.new_game()
+
+    def update(self, game: 'Game') -> None:
+        """Оновлення стану гри на паузі"""
+        # Таймер не оновлюється під час паузи
+        pass
+
+    def render(self, surface: pygame.Surface, game: 'Game') -> None:
+        """Відображення стану гри на паузі"""
+        surface.fill(WHITE)
+
+        # Відображення розмитої сітки
+        game.renderer.draw_blurred_grid(surface)
+
+        # Відображення кнопок
+        game.renderer.draw_buttons(surface, game.button_manager.buttons)
+
+        # Відображення таймеру (зупиненого)
+        game.renderer.draw_timer(surface, game.timer.get_formatted_time())
+
+        # Відображення повідомлення про паузу
+        game.renderer.draw_pause_message(surface)
 
         # Відображення кількості використаних підказок
         hints_text = game.small_font.render(
@@ -137,6 +200,7 @@ class GameOverState(IGameState):
                 game.set_state(PlayingState())
 
     def update(self, game: 'Game') -> None:
+        # Таймер не оновлюється після завершення гри
         pass
 
     def render(self, surface: pygame.Surface, game: 'Game') -> None:
@@ -144,6 +208,9 @@ class GameOverState(IGameState):
         surface.fill(WHITE)
         game.renderer.draw_grid(surface, game.board.grid, None)
         game.renderer.draw_buttons(surface, game.button_manager.buttons)
+
+        # Відображення фінального часу
+        game.renderer.draw_timer(surface, game.timer.get_formatted_time())
 
         # Потім відображаємо повідомлення про завершення
         game.renderer.draw_game_over(surface)

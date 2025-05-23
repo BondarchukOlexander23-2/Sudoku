@@ -6,7 +6,7 @@
 GRID_SIZE = 9
 SUB_GRID_SIZE = 3
 CELL_SIZE = 60
-WINDOW_SIZE = (GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE + 60)  # 60 додаткових пікселів для кнопок
+WINDOW_SIZE = (GRID_SIZE * CELL_SIZE + 150, GRID_SIZE * CELL_SIZE + 80 )  # 60 додаткових пікселів для кнопок
 
 # Кольори
 BLACK = (0, 0, 0)

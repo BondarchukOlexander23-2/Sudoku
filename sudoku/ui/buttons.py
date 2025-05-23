@@ -32,12 +32,22 @@ class ButtonManager:
         auto_notes_rect = pygame.Rect(230, self.button_y, 120, self.button_height)
         self.buttons["auto_notes"] = (auto_notes_rect, auto_notes_text)
 
+        # Кнопка паузи
+        pause_text = self.small_font.render("Пауза", True, WHITE)
+        pause_rect = pygame.Rect(360, self.button_y, 80, self.button_height)
+        self.buttons["pause"] = (pause_rect, pause_text)
 
     def update_difficulty_button(self, difficulty_name: str):
         """Оновлює текст кнопки складності"""
         difficulty_text = self.small_font.render(f"Складність: {difficulty_name}", True, WHITE)
-        difficulty_rect = pygame.Rect(360, self.button_y, 160, self.button_height)
+        difficulty_rect = pygame.Rect(450, self.button_y, 160, self.button_height)
         self.buttons["difficulty"] = (difficulty_rect, difficulty_text)
+
+    def update_pause_button(self, text: str):
+        """Оновлює текст кнопки паузи"""
+        pause_text = self.small_font.render(text, True, WHITE)
+        pause_rect = pygame.Rect(360, self.button_y, 80, self.button_height)
+        self.buttons["pause"] = (pause_rect, pause_text)
 
     def get_clicked_button(self, x: int, y: int) -> str:
         """Повертає назву кнопки, на яку натиснули, або пусту строку"""

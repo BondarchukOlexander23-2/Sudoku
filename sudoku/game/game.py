@@ -8,7 +8,8 @@ from ..config import WINDOW_SIZE, GRID_SIZE
 from ..models import Difficulty
 from ..core import SudokuGenerator, SudokuBoard
 from ..ui import SudokuRenderer, ButtonManager
-from .states import IGameState, PlayingState, GameOverState
+from .states import IGameState, PlayingState, GameOverState, PausedState
+from .timer import GameTimer
 
 
 class Game:
@@ -28,6 +29,7 @@ class Game:
         self.board = SudokuBoard(self.generator)
         self.renderer = SudokuRenderer(self.font, self.small_font)
         self.button_manager = ButtonManager(self.small_font)
+        self.timer = GameTimer()
 
         # Стан гри
         self.selected_cell: Optional[Tuple[int, int]] = None
@@ -50,6 +52,21 @@ class Game:
         self.board.initialize(self.difficulty)
         self.selected_cell = None
         self.state = PlayingState()
+        self.timer.reset()
+
+    def pause_game(self):
+        """Ставить гру на паузу"""
+        if isinstance(self.state, PlayingState):
+            self.timer.pause()
+            self.state = PausedState()
+            self.button_manager.update_pause_button("Продовжити")
+
+    def resume_game(self):
+        """Відновлює гру після паузи"""
+        if isinstance(self.state, PausedState):
+            self.timer.resume()
+            self.state = PlayingState()
+            self.button_manager.update_pause_button("Пауза")
 
     def select_cell(self, row: int, col: int):
         """Обирає клітинку"""
@@ -66,10 +83,13 @@ class Game:
 
             # Перевірка на завершення гри після використання підказки
             if self.board.is_complete():
+                self.timer.pause()
                 self.state = GameOverState()
 
     def set_state(self, new_state: IGameState):
         """Встановлює новий стан гри"""
+        if isinstance(new_state, GameOverState):
+            self.timer.pause()
         self.state = new_state
 
     def run(self):
