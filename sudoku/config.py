@@ -1,23 +1,27 @@
 """
-Конфігураційний файл для гри судоку
+Конфігураційні константи для гри Судоку
 """
 
-# Розміри гри
+# Розміри сітки
 GRID_SIZE = 9
 SUB_GRID_SIZE = 3
 CELL_SIZE = 60
-WINDOW_SIZE = (GRID_SIZE * CELL_SIZE + 150, GRID_SIZE * CELL_SIZE + 80 )  # 60 додаткових пікселів для кнопок
+
+# Розміри вікна (збільшено для розміщення всіх елементів)
+WINDOW_WIDTH = GRID_SIZE * CELL_SIZE + 30
+WINDOW_HEIGHT = GRID_SIZE * CELL_SIZE + 120  # Додатковий простір для UI
+WINDOW_SIZE = (WINDOW_WIDTH, WINDOW_HEIGHT)
 
 # Кольори
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-GRAY = (200, 200, 200)
-BLUE = (0, 123, 255)
+GRAY = (128, 128, 128)
+LIGHT_GRAY = (200, 200, 200)
+BLUE = (70, 130, 180)
+GREEN = (0, 255, 0)
 RED = (255, 0, 0)
-GREEN = (0, 200, 0)
-YELLOW = (255, 255, 0)
 LIGHT_BLUE = (173, 216, 230)
-LIGHT_BLUE_ALT = (220, 220, 255)
+LIGHT_BLUE_ALT = (230, 240, 250)
 
-# Налаштування гри
-MAX_HINTS = 3
+# Налаштування підказок
+MAX_HINTS = 5

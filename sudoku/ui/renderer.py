@@ -123,17 +123,24 @@ class SudokuRenderer:
         """Малює таймер"""
         timer_text = self.font.render(f"Час: {time_str}", True, BLACK)
         timer_rect = timer_text.get_rect()
-        timer_rect.topright = (WINDOW_SIZE[0] - 10, 10)
+        # Розміщуємо таймер під сіткою, але над кнопками
+        timer_rect.topleft = (10, GRID_SIZE * self.cell_size + 5)
         surface.blit(timer_text, timer_rect)
 
     def draw_pause_message(self, surface: pygame.Surface):
         """Малює повідомлення про паузу"""
         # Створюємо напівпрозорий фон для повідомлення
-        message_bg = pygame.Surface((400, 150))
-        message_bg.set_alpha(220)
+        message_width = 350
+        message_height = 120
+        message_bg = pygame.Surface((message_width, message_height))
+        message_bg.set_alpha(240)
         message_bg.fill(WHITE)
 
-        message_rect = message_bg.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
+        # Центруємо повідомлення відносно ігрової області (без UI)
+        game_area_center_x = (GRID_SIZE * self.cell_size) // 2
+        game_area_center_y = (GRID_SIZE * self.cell_size) // 2
+
+        message_rect = message_bg.get_rect(center=(game_area_center_x, game_area_center_y))
         surface.blit(message_bg, message_rect)
 
         # Рамка навколо повідомлення
@@ -141,25 +148,30 @@ class SudokuRenderer:
 
         # Текст повідомлення
         pause_text = self.font.render("ПАУЗА", True, BLACK)
-        pause_rect = pause_text.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 - 20))
+        pause_rect = pause_text.get_rect(center=(game_area_center_x, game_area_center_y - 15))
         surface.blit(pause_text, pause_rect)
 
         # Інструкція
         instruction_text = self.small_font.render("Натисніть 'P' або 'Пробіл' для продовження", True, BLACK)
-        instruction_rect = instruction_text.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 20))
+        instruction_rect = instruction_text.get_rect(center=(game_area_center_x, game_area_center_y + 15))
         surface.blit(instruction_text, instruction_rect)
 
     def draw_game_over(self, surface: pygame.Surface):
         """Малює повідомлення про завершення гри"""
-        overlay = pygame.Surface((WINDOW_SIZE[0], WINDOW_SIZE[1]))
-        overlay.set_alpha(180)  # Напівпрозорий
+        # Напівпрозорий overlay тільки для ігрової області
+        overlay = pygame.Surface((GRID_SIZE * self.cell_size, GRID_SIZE * self.cell_size))
+        overlay.set_alpha(180)
         overlay.fill(BLACK)
         surface.blit(overlay, (0, 0))
 
+        # Центруємо повідомлення відносно ігрової області
+        game_area_center_x = (GRID_SIZE * self.cell_size) // 2
+        game_area_center_y = (GRID_SIZE * self.cell_size) // 2
+
         text = self.font.render("Вітаємо! Ви розв'язали Судоку!", True, GREEN)
-        text_rect = text.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
+        text_rect = text.get_rect(center=(game_area_center_x, game_area_center_y))
         surface.blit(text, text_rect)
 
         subtext = self.small_font.render("Натисніть 'Н', щоб почати нову гру", True, WHITE)
-        subtext_rect = subtext.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2 + 40))
+        subtext_rect = subtext.get_rect(center=(game_area_center_x, game_area_center_y + 40))
         surface.blit(subtext, subtext_rect)

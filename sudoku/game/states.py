@@ -129,11 +129,12 @@ class PlayingState(IGameState):
         game.renderer.draw_timer(surface, game.timer.get_formatted_time())
 
         # Відображення кількості використаних підказок
+        second_row_y = GRID_SIZE * CELL_SIZE + 95  # Під другим рядом кнопок
         hints_text = game.small_font.render(
             f"Підказки: {game.board.hints_used}/{game.board.max_hints}",
             True, BLACK
         )
-        surface.blit(hints_text, (10, game.window_size[1] - 30))
+        surface.blit(hints_text, (10, second_row_y))
 
 
 class PausedState(IGameState):
@@ -184,11 +185,12 @@ class PausedState(IGameState):
         game.renderer.draw_pause_message(surface)
 
         # Відображення кількості використаних підказок
+        second_row_y = GRID_SIZE * CELL_SIZE + 95  # Під другим рядом кнопок
         hints_text = game.small_font.render(
             f"Підказки: {game.board.hints_used}/{game.board.max_hints}",
             True, BLACK
         )
-        surface.blit(hints_text, (10, game.window_size[1] - 30))
+        surface.blit(hints_text, (10, second_row_y))
 
 
 class GameOverState(IGameState):
