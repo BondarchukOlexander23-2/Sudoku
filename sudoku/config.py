@@ -7,9 +7,9 @@ GRID_SIZE = 9
 SUB_GRID_SIZE = 3
 CELL_SIZE = 60
 
-# Розміри вікна (збільшено для розміщення всіх елементів)
+# Розміри вікна
 WINDOW_WIDTH = GRID_SIZE * CELL_SIZE + 30
-WINDOW_HEIGHT = GRID_SIZE * CELL_SIZE + 120  # Додатковий простір для UI
+WINDOW_HEIGHT = GRID_SIZE * CELL_SIZE + 120
 WINDOW_SIZE = (WINDOW_WIDTH, WINDOW_HEIGHT)
 
 # Кольори

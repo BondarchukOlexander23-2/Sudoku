@@ -22,7 +22,7 @@ class ButtonManager:
         current_x = margin_left
         y = self.button_y
 
-        # Кнопка нової гри
+        # Кнопка нової гри (тепер веде до вибору складності)
         new_game_text = self.small_font.render("Нова гра", True, WHITE)
         new_game_rect = pygame.Rect(current_x, y, 90, self.button_height)
         self.buttons["new_game"] = (new_game_rect, new_game_text)
@@ -46,16 +46,10 @@ class ButtonManager:
         self.buttons["auto_notes"] = (auto_notes_rect, auto_notes_text)
         current_x += 110 + spacing
 
-        # Кнопка складності (додається/оновлюється динамічно)
-        self.update_difficulty_button("Легко")
-
-    def update_difficulty_button(self, difficulty_name: str):
-        """Оновлює текст кнопки складності"""
-        y = self.button_y
-        current_x = 10 + 90 + 10 + 80 + 10 + 70 + 10 + 110 + 10  # позиція після всіх інших кнопок
-        difficulty_text = self.small_font.render(f"Складність: {difficulty_name}", True, WHITE)
-        difficulty_rect = pygame.Rect(current_x, y, 170, self.button_height)
-        self.buttons["difficulty"] = (difficulty_rect, difficulty_text)
+        # Кнопка меню (замість кнопки складності)
+        menu_text = self.small_font.render("Меню", True, WHITE)
+        menu_rect = pygame.Rect(current_x, y, 70, self.button_height)
+        self.buttons["menu"] = (menu_rect, menu_text)
 
     def update_pause_button(self, text: str):
         """Оновлює текст кнопки паузи"""

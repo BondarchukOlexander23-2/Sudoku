@@ -1,5 +1,5 @@
 """
-Основний модуль гри
+Основний модуль гри з головним меню
 """
 import pygame
 from typing import Optional, Tuple
@@ -8,7 +8,7 @@ from ..config import WINDOW_SIZE, GRID_SIZE
 from ..models import Difficulty
 from ..core import SudokuGenerator, SudokuBoard
 from ..ui import SudokuRenderer, ButtonManager
-from .states import IGameState, PlayingState, GameOverState, PausedState
+from .states import IGameState, MainMenuState, PlayingState, GameOverState, PausedState
 from .timer import GameTimer
 
 
@@ -34,24 +34,26 @@ class Game:
         # Стан гри
         self.selected_cell: Optional[Tuple[int, int]] = None
         self.difficulty = Difficulty.MEDIUM
-        self.state: IGameState = PlayingState()
 
-        # Ініціалізація інтерфейсу
-        self._initialize_ui()
+        # Починаємо з головного меню
+        self.state: IGameState = MainMenuState()
 
-        # Початок нової гри
-        self.new_game()
+        # Прапорець для перевірки, чи була ініціалізована гра
+        self.game_initialized = False
 
-    def _initialize_ui(self):
-        """Ініціалізує елементи інтерфейсу"""
-        self.button_manager.initialize_buttons()
-        self.button_manager.update_difficulty_button(self.difficulty.name)
+    def _initialize_game_ui(self):
+        """Ініціалізує елементи ігрового інтерфейсу (викликається при першому запуску гри)"""
+        if not self.game_initialized:
+            self.button_manager.initialize_buttons()
+            self.game_initialized = True
 
     def new_game(self):
         """Створює нову гру"""
+        # Ініціалізуємо UI при необхідності
+        self._initialize_game_ui()
+
         self.board.initialize(self.difficulty)
         self.selected_cell = None
-        self.state = PlayingState()
         self.timer.reset()
 
     def pause_game(self):
