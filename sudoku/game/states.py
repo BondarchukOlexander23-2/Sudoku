@@ -47,7 +47,7 @@ class MainMenuState(IGameState):
         buttons_data = [
             ("play", "Грати"),
             ("continue", "Продовжити"),
-            ("records", "Таблиця рекордів"),
+            ("records", "Рекорди"),
             ("exit", "Вийти")
         ]
 
