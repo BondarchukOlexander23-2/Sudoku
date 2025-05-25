@@ -42,3 +42,40 @@ class GameRecord:
             date_completed=datetime.fromisoformat(data['date_completed'])
         )
 
+
+@dataclass
+class SavedGame:
+    """Модель для збереженої гри"""
+    id: Optional[int]
+    difficulty: Difficulty
+    current_state: List[List[Dict[str, Any]]]  # Стан дошки в JSON форматі
+    solution: List[List[int]]  # Розв'язок
+    elapsed_time: int  # Пройдений час в секундах
+    hints_used: int
+    date_saved: datetime
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Конвертує об'єкт у словник"""
+        return {
+            'id': self.id,
+            'difficulty': self.difficulty.name,
+            'current_state': json.dumps(self.current_state),
+            'solution': json.dumps(self.solution),
+            'elapsed_time': self.elapsed_time,
+            'hints_used': self.hints_used,
+            'date_saved': self.date_saved.isoformat()
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'SavedGame':
+        """Створює об'єкт з словника"""
+        return cls(
+            id=data.get('id'),
+            difficulty=Difficulty[data['difficulty']],
+            current_state=json.loads(data['current_state']) if isinstance(data['current_state'], str) else data['current_state'],
+            solution=json.loads(data['solution']) if isinstance(data['solution'], str) else data['solution'],
+            elapsed_time=data['elapsed_time'],
+            hints_used=data['hints_used'],
+            date_saved=datetime.fromisoformat(data['date_saved'])
+        )
+

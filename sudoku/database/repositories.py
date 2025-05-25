@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from datetime import datetime
 
-from .models import GameRecord
+from .models import GameRecord, SavedGame
 from ..models import Difficulty
 
 
@@ -40,4 +40,38 @@ class IGameRecordRepository(ABC):
     @abstractmethod
     def delete(self, record_id: int) -> bool:
         """Видаляє запис"""
+        pass
+
+
+class ISavedGameRepository(ABC):
+    """Інтерфейс репозиторію для збережених ігор"""
+
+    @abstractmethod
+    def save(self, game: SavedGame) -> int:
+        """Зберігає гру і повертає ID"""
+        pass
+
+    @abstractmethod
+    def get_by_id(self, game_id: int) -> Optional[SavedGame]:
+        """Отримує збережену гру за ID"""
+        pass
+
+    @abstractmethod
+    def get_all(self) -> List[SavedGame]:
+        """Отримує всі збережені ігри"""
+        pass
+
+    @abstractmethod
+    def get_latest(self) -> Optional[SavedGame]:
+        """Отримує останню збережену гру"""
+        pass
+
+    @abstractmethod
+    def update(self, game: SavedGame) -> bool:
+        """Оновлює збережену гру"""
+        pass
+
+    @abstractmethod
+    def delete(self, game_id: int) -> bool:
+        """Видаляє збережену гру"""
         pass

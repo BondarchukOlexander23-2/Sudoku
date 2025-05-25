@@ -5,8 +5,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import json
 
-from .repositories import IGameRecordRepository
-from .models import GameRecord
+from .repositories import IGameRecordRepository, ISavedGameRepository
+from .models import GameRecord, SavedGame
 from ..models import Difficulty, Cell
 from ..utils.helpers import calculate_difficulty_score
 
@@ -79,3 +79,54 @@ class GameRecordService:
         """Видаляє запис"""
         return self.repository.delete(record_id)
 
+
+
+class SavedGameService:
+    """Сервіс для роботи зі збереженими іграми"""
+
+    def __init__(self, repository: ISavedGameRepository):
+        self.repository = repository
+
+    def save_game(self, difficulty: Difficulty, grid: List[List[Cell]],
+                  solution: List[List[int]], elapsed_time: int, hints_used: int) -> int:
+        """Зберігає поточну гру"""
+        # Конвертуємо сітку клітинок у JSON-серіалізовану форму
+        grid_data = [[cell.to_dict() for cell in row] for row in grid]
+
+        saved_game = SavedGame(
+            id=None,
+            difficulty=difficulty,
+            current_state=grid_data,
+            solution=solution,
+            elapsed_time=elapsed_time,
+            hints_used=hints_used,
+            date_saved=datetime.now()
+        )
+
+        return self.repository.save(saved_game)
+
+    def load_game(self, game_id: int) -> Optional[SavedGame]:
+        """Завантажує збережену гру"""
+        return self.repository.get_by_id(game_id)
+
+    def get_all_saves(self) -> List[SavedGame]:
+        """Отримує всі збережені ігри"""
+        return self.repository.get_all()
+
+    def get_latest_save(self) -> Optional[SavedGame]:
+        """Отримує останнє збереження"""
+        return self.repository.get_latest()
+
+    def update_save(self, saved_game: SavedGame) -> bool:
+        """Оновлює збережену гру"""
+        saved_game.date_saved = datetime.now()
+        return self.repository.update(saved_game)
+
+    def delete_save(self, game_id: int) -> bool:
+        """Видаляє збережену гру"""
+        return self.repository.delete(game_id)
+
+    def has_saves(self) -> bool:
+        """Перевіряє, чи є збережені ігри"""
+        saves = self.repository.get_all()
+        return len(saves) > 0

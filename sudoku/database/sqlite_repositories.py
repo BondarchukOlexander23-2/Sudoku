@@ -5,8 +5,8 @@ import sqlite3
 from typing import List, Optional
 from datetime import datetime
 
-from .repositories import IGameRecordRepository
-from .models import GameRecord
+from .repositories import IGameRecordRepository, ISavedGameRepository
+from .models import GameRecord, SavedGame
 from .database_manager import DatabaseManager
 from ..models import Difficulty
 
@@ -83,6 +83,118 @@ class SQLiteGameRecordRepository(IGameRecordRepository):
         cursor = conn.execute("""
             DELETE FROM game_records WHERE id = ?
         """, (record_id,))
+
+        conn.commit()
+        return cursor.rowcount > 0
+
+
+
+class SQLiteSavedGameRepository(ISavedGameRepository):
+    """SQLite реалізація репозиторію для збережених ігор"""
+
+    def __init__(self, db_manager: DatabaseManager):
+        self.db_manager = db_manager
+
+    def save(self, game: SavedGame) -> int:
+        """Зберігає гру і повертає ID"""
+        conn = self.db_manager.get_connection()
+
+        if game.id is None:
+            # Створення нового запису
+            cursor = conn.execute("""
+                INSERT INTO saved_games (difficulty, current_state, solution, elapsed_time, hints_used, date_saved)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                game.difficulty.name,
+                game.to_dict()['current_state'],
+                game.to_dict()['solution'],
+                game.elapsed_time,
+                game.hints_used,
+                game.date_saved.isoformat()
+            ))
+            game_id = cursor.lastrowid
+        else:
+            # Оновлення існуючого запису
+            conn.execute("""
+                UPDATE saved_games 
+                SET current_state = ?, elapsed_time = ?, hints_used = ?, 
+                    date_saved = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (
+                game.to_dict()['current_state'],
+                game.elapsed_time,
+                game.hints_used,
+                game.date_saved.isoformat(),
+                game.id
+            ))
+            game_id = game.id
+
+        conn.commit()
+        return game_id
+
+    def get_by_id(self, game_id: int) -> Optional[SavedGame]:
+        """Отримує збережену гру за ID"""
+        conn = self.db_manager.get_connection()
+        cursor = conn.execute("""
+            SELECT * FROM saved_games WHERE id = ?
+        """, (game_id,))
+
+        row = cursor.fetchone()
+        if row:
+            return SavedGame.from_dict(dict(row))
+        return None
+
+    def get_all(self) -> List[SavedGame]:
+        """Отримує всі збережені ігри"""
+        conn = self.db_manager.get_connection()
+        cursor = conn.execute("""
+            SELECT * FROM saved_games ORDER BY date_saved DESC
+        """)
+
+        return [SavedGame.from_dict(dict(row)) for row in cursor.fetchall()]
+
+    def get_latest(self) -> Optional[SavedGame]:
+        """Отримує останню збережену гру"""
+        conn = self.db_manager.get_connection()
+        cursor = conn.execute("""
+            SELECT * FROM saved_games ORDER BY date_saved DESC LIMIT 1
+        """)
+
+        row = cursor.fetchone()
+        if row:
+            return SavedGame.from_dict(dict(row))
+        return None
+
+    def update(self, game: SavedGame) -> bool:
+        """Оновлює збережену гру"""
+        if game.id is None:
+            return False
+
+        conn = self.db_manager.get_connection()
+        cursor = conn.execute("""
+            UPDATE saved_games 
+            SET difficulty = ?, current_state = ?, solution = ?, elapsed_time = ?, 
+                hints_used = ?, date_saved = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (
+            game.difficulty.name,
+            game.to_dict()['current_state'],
+            game.to_dict()['solution'],
+            game.elapsed_time,
+            game.hints_used,
+            game.date_saved.isoformat(),
+            game.id
+        ))
+
+        conn.commit()
+        return cursor.rowcount > 0
+
+    def delete(self, game_id: int) -> bool:
+        """Видаляє збережену гру"""
+        conn = self.db_manager.get_connection()
+        cursor = conn.execute("""
+            DELETE FROM saved_games WHERE id = ?
+        """, (game_id,))
 
         conn.commit()
         return cursor.rowcount > 0
