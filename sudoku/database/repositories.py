@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from datetime import datetime
 
-from .models import GameRecord, SavedGame
+from .models import GameRecord, SavedGame, UserSetting
 from ..models import Difficulty
 
 
@@ -74,4 +74,33 @@ class ISavedGameRepository(ABC):
     @abstractmethod
     def delete(self, game_id: int) -> bool:
         """Видаляє збережену гру"""
+        pass
+
+
+class IUserSettingsRepository(ABC):
+    """Інтерфейс репозиторію для налаштувань користувача"""
+
+    @abstractmethod
+    def save(self, setting: UserSetting) -> int:
+        """Зберігає налаштування"""
+        pass
+
+    @abstractmethod
+    def get_by_name(self, name: str) -> Optional[UserSetting]:
+        """Отримує налаштування за назвою"""
+        pass
+
+    @abstractmethod
+    def get_all(self) -> List[UserSetting]:
+        """Отримує всі налаштування"""
+        pass
+
+    @abstractmethod
+    def update(self, setting: UserSetting) -> bool:
+        """Оновлює налаштування"""
+        pass
+
+    @abstractmethod
+    def delete(self, name: str) -> bool:
+        """Видаляє налаштування"""
         pass

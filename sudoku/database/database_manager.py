@@ -66,7 +66,7 @@ class DatabaseManager:
                 date_completed TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
-
+            
             -- Таблиця для збережених ігор
             CREATE TABLE IF NOT EXISTS saved_games (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,7 +79,7 @@ class DatabaseManager:
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
-
+            
             -- Таблиця для налаштувань користувача
             CREATE TABLE IF NOT EXISTS user_settings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,7 +88,7 @@ class DatabaseManager:
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
-
+            
             -- Індекси для оптимізації запитів
             CREATE INDEX IF NOT EXISTS idx_game_records_difficulty ON game_records(difficulty);
             CREATE INDEX IF NOT EXISTS idx_game_records_score ON game_records(score DESC);

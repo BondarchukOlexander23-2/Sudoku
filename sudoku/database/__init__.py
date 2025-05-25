@@ -1,23 +1,21 @@
 """
 Пакет для роботи з базою даних
 """
-
-from .models import GameRecord, SavedGame
-from .repositories import IGameRecordRepository, ISavedGameRepository
-from .sqlite_repositories import SQLiteGameRecordRepository, SQLiteSavedGameRepository
+from .models import GameRecord, SavedGame, UserSetting
+from .repositories import IGameRecordRepository, ISavedGameRepository, IUserSettingsRepository
+from .sqlite_repositories import SQLiteGameRecordRepository, SQLiteSavedGameRepository, SQLiteUserSettingsRepository
 from .database_manager import DatabaseManager
-from .services import GameRecordService, SavedGameService
-
+from .services import GameRecordService, SavedGameService, UserSettingsService
 
 __all__ = [
     # Models
-    'GameRecord','SavedGame',
+    'GameRecord', 'SavedGame', 'UserSetting',
     # Repository interfaces
-    'IGameRecordRepository', 'ISavedGameRepository',
+    'IGameRecordRepository', 'ISavedGameRepository', 'IUserSettingsRepository',
     # Repository implementations
-    'SQLiteGameRecordRepository', 'SQLiteSavedGameRepository',
+    'SQLiteGameRecordRepository', 'SQLiteSavedGameRepository', 'SQLiteUserSettingsRepository',
     # Database manager
     'DatabaseManager',
     # Services
-    'GameRecordService', 'SavedGameService',
+    'GameRecordService', 'SavedGameService', 'UserSettingsService'
 ]

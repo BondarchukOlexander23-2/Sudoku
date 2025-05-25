@@ -79,3 +79,27 @@ class SavedGame:
             date_saved=datetime.fromisoformat(data['date_saved'])
         )
 
+
+@dataclass
+class UserSetting:
+    """Модель для налаштувань користувача"""
+    id: Optional[int]
+    setting_name: str
+    setting_value: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Конвертує об'єкт у словник"""
+        return {
+            'id': self.id,
+            'setting_name': self.setting_name,
+            'setting_value': self.setting_value
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'UserSetting':
+        """Створює об'єкт з словника"""
+        return cls(
+            id=data.get('id'),
+            setting_name=data['setting_name'],
+            setting_value=data['setting_value']
+        )

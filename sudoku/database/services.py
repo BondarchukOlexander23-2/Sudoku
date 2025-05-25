@@ -5,8 +5,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import json
 
-from .repositories import IGameRecordRepository, ISavedGameRepository
-from .models import GameRecord, SavedGame
+from .repositories import IGameRecordRepository, ISavedGameRepository, IUserSettingsRepository
+from .models import GameRecord, SavedGame, UserSetting
 from ..models import Difficulty, Cell
 from ..utils.helpers import calculate_difficulty_score
 
@@ -80,7 +80,6 @@ class GameRecordService:
         return self.repository.delete(record_id)
 
 
-
 class SavedGameService:
     """Сервіс для роботи зі збереженими іграми"""
 
@@ -130,3 +129,140 @@ class SavedGameService:
         """Перевіряє, чи є збережені ігри"""
         saves = self.repository.get_all()
         return len(saves) > 0
+
+
+class UserSettingsService:
+    """Сервіс для роботи з налаштуваннями користувача"""
+
+    def __init__(self, repository: IUserSettingsRepository):
+        self.repository = repository
+
+    def get_setting(self, name: str, default_value: str = None) -> Optional[str]:
+        """Отримує значення налаштування за назвою"""
+        setting = self.repository.get_by_name(name)
+        if setting:
+            return setting.setting_value
+        return default_value
+
+    def set_setting(self, name: str, value: str) -> bool:
+        """Встановлює значення налаштування"""
+        existing_setting = self.repository.get_by_name(name)
+
+        if existing_setting:
+            # Оновлюємо існуюче налаштування
+            existing_setting.setting_value = value
+            return self.repository.update(existing_setting)
+        else:
+            # Створюємо нове налаштування
+            new_setting = UserSetting(
+                id=None,
+                setting_name=name,
+                setting_value=value
+            )
+            self.repository.save(new_setting)
+            return True
+
+    def get_all_settings(self) -> Dict[str, str]:
+        """Отримує всі налаштування у вигляді словника"""
+        settings = self.repository.get_all()
+        return {setting.setting_name: setting.setting_value for setting in settings}
+
+    def get_theme(self) -> str:
+        """Отримує поточну тему"""
+        return self.get_setting('theme', 'light')
+
+    def set_theme(self, theme: str) -> bool:
+        """Встановлює тему (light/dark)"""
+        if theme not in ['light', 'dark']:
+            raise ValueError("Theme must be 'light' or 'dark'")
+        return self.set_setting('theme', theme)
+
+    def is_sound_enabled(self) -> bool:
+        """Перевіряє, чи увімкнений звук"""
+        return self.get_setting('sound_enabled', 'true').lower() == 'true'
+
+    def set_sound_enabled(self, enabled: bool) -> bool:
+        """Встановлює статус звуку"""
+        return self.set_setting('sound_enabled', str(enabled).lower())
+
+    def is_auto_notes_enabled(self) -> bool:
+        """Перевіряє, чи увімкнені автоматичні нотатки"""
+        return self.get_setting('auto_notes', 'false').lower() == 'true'
+
+    def set_auto_notes_enabled(self, enabled: bool) -> bool:
+        """Встановлює статус автоматичних нотаток"""
+        return self.set_setting('auto_notes', str(enabled).lower())
+
+    def is_highlight_conflicts_enabled(self) -> bool:
+        """Перевіряє, чи увімкнене підсвічування конфліктів"""
+        return self.get_setting('highlight_conflicts', 'true').lower() == 'true'
+
+    def set_highlight_conflicts_enabled(self, enabled: bool) -> bool:
+        """Встановлює статус підсвічування конфліктів"""
+        return self.set_setting('highlight_conflicts', str(enabled).lower())
+
+    def is_timer_shown(self) -> bool:
+        """Перевіряє, чи показується таймер"""
+        return self.get_setting('show_timer', 'true').lower() == 'true'
+
+    def set_timer_shown(self, shown: bool) -> bool:
+        """Встановлює, чи показувати таймер"""
+        return self.set_setting('show_timer', str(shown).lower())
+
+    def get_max_hints(self) -> int:
+        """Отримує максимальну кількість підказок"""
+        try:
+            return int(self.get_setting('max_hints', '5'))
+        except (ValueError, TypeError):
+            return 5
+
+    def set_max_hints(self, max_hints: int) -> bool:
+        """Встановлює максимальну кількість підказок"""
+        if max_hints < 0:
+            raise ValueError("Max hints cannot be negative")
+        return self.set_setting('max_hints', str(max_hints))
+
+    def get_difficulty_preference(self) -> Optional[str]:
+        """Отримує переважний рівень складності"""
+        return self.get_setting('preferred_difficulty')
+
+    def set_difficulty_preference(self, difficulty: str) -> bool:
+        """Встановлює переважний рівень складності"""
+        valid_difficulties = ['EASY', 'MEDIUM', 'HARD']
+        if difficulty.upper() not in valid_difficulties:
+            raise ValueError(f"Difficulty must be one of: {valid_difficulties}")
+        return self.set_setting('preferred_difficulty', difficulty.upper())
+
+    def reset_settings(self) -> bool:
+        """Скидає всі налаштування до значень за замовчуванням"""
+        default_settings = {
+            'theme': 'light',
+            'sound_enabled': 'true',
+            'auto_notes': 'false',
+            'highlight_conflicts': 'true',
+            'show_timer': 'true',
+            'max_hints': '5'
+        }
+
+        success = True
+        for name, value in default_settings.items():
+            if not self.set_setting(name, value):
+                success = False
+
+        return success
+
+    def delete_setting(self, name: str) -> bool:
+        """Видаляє налаштування"""
+        return self.repository.delete(name)
+
+    def export_settings(self) -> Dict[str, str]:
+        """Експортує налаштування для бекапу"""
+        return self.get_all_settings()
+
+    def import_settings(self, settings: Dict[str, str]) -> bool:
+        """Імпортує налаштування з бекапу"""
+        success = True
+        for name, value in settings.items():
+            if not self.set_setting(name, value):
+                success = False
+        return success
