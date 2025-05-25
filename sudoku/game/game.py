@@ -5,11 +5,15 @@ import pygame
 from typing import Optional, Tuple
 import logging
 
+from sudoku.game.states.main_menu_state import MainMenuState
 from ..config import WINDOW_SIZE, GRID_SIZE
 from ..models import Difficulty
 from ..core import SudokuGenerator, SudokuBoard
 from ..ui import SudokuRenderer, ButtonManager
-from .states import IGameState, MainMenuState, PlayingState, GameOverState, PausedState
+from .states.game_over_state import GameOverState
+from .states.i_game_state import IGameState
+from .states.paused_state import PausedState
+from .states.playing_state import PlayingState
 from .timer import GameTimer
 from .database_integration import GameDatabaseManager
 

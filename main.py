@@ -4,10 +4,12 @@
 import os
 import sys
 
+from sudoku import Game
+
 # Додавання поточної директорії до шляху для імпорту модулів
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from sudoku import Game
+
 
 
 def main():
