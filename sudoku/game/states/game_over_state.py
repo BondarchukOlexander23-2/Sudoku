@@ -1,15 +1,11 @@
 import pygame
 from typing import TYPE_CHECKING
 
-from .difficulty_select_state import DifficultySelectState
 from .i_game_state import IGameState
-from .main_menu_state import MainMenuState
 from ...config import WHITE
 
 if TYPE_CHECKING:
     from ..game import Game
-
-
 
 
 class GameOverState(IGameState):
@@ -17,8 +13,10 @@ class GameOverState(IGameState):
     def handle_event(self, event: pygame.event.Event, game: 'Game') -> None:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_n:
+                from .difficulty_select_state import DifficultySelectState
                 game.set_state(DifficultySelectState())
             elif event.key == pygame.K_ESCAPE:
+                from .main_menu_state import MainMenuState
                 game.set_state(MainMenuState())
         elif event.type == pygame.MOUSEBUTTONDOWN:
             # Можна додати кнопки для нової гри або повернення в меню

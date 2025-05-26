@@ -3,7 +3,6 @@ import sys
 from typing import TYPE_CHECKING
 
 from .i_game_state import IGameState
-from .difficulty_select_state import DifficultySelectState
 from ...config import WINDOW_SIZE, WHITE, BLACK, BLUE, GRAY
 
 if TYPE_CHECKING:
@@ -62,6 +61,8 @@ class MainMenuState(IGameState):
     def _handle_menu_click(self, button_name: str, game: 'Game') -> None:
         """Обробка натискання кнопок меню"""
         if button_name == "play":
+            # Імпортуємо тут, щоб уникнути циркулярного імпорту
+            from .difficulty_select_state import DifficultySelectState
             game.set_state(DifficultySelectState())
         elif button_name == "continue":
             # TODO: Реалізувати завантаження збереженої гри з БД

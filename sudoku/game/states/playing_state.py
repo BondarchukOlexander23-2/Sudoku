@@ -1,11 +1,7 @@
 import pygame
 from typing import TYPE_CHECKING
 
-from .difficulty_select_state import DifficultySelectState
-from .game_over_state import GameOverState
 from .i_game_state import IGameState
-from .main_menu_state import MainMenuState
-
 from ...config import GRID_SIZE, CELL_SIZE, WHITE, BLACK
 
 if TYPE_CHECKING:
@@ -31,6 +27,7 @@ class PlayingState(IGameState):
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
+                from .main_menu_state import MainMenuState
                 game.set_state(MainMenuState())
             else:
                 self._handle_key_press(event.key, game)
@@ -38,6 +35,7 @@ class PlayingState(IGameState):
     def _handle_button_click(self, button_name: str, game: 'Game') -> None:
         """Обробка натискання кнопок"""
         if button_name == "new_game":
+            from .difficulty_select_state import DifficultySelectState
             game.set_state(DifficultySelectState())
         elif button_name == "hint":
             game.use_hint()
@@ -46,6 +44,7 @@ class PlayingState(IGameState):
         elif button_name == "pause":
             game.pause_game()
         elif button_name == "menu":
+            from .main_menu_state import MainMenuState
             game.set_state(MainMenuState())
 
     def _handle_key_press(self, key: int, game: 'Game') -> None:
@@ -67,6 +66,7 @@ class PlayingState(IGameState):
 
                     # Перевірка на завершення гри
                     if game.board.is_complete():
+                        from .game_over_state import GameOverState
                         game.set_state(GameOverState())
 
             # Навігація стрілками

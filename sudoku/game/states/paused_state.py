@@ -1,8 +1,7 @@
 import pygame
 from typing import TYPE_CHECKING
 
-from i_game_state import IGameState
-from .main_menu_state import MainMenuState
+from .i_game_state import IGameState
 from ...config import WHITE, GRID_SIZE, CELL_SIZE, BLACK
 
 if TYPE_CHECKING:
@@ -19,12 +18,14 @@ class PausedState(IGameState):
             if clicked_button == "pause":
                 game.resume_game()
             elif clicked_button == "menu":
+                from .main_menu_state import MainMenuState
                 game.set_state(MainMenuState())
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_p or event.key == pygame.K_SPACE:
                 game.resume_game()
             elif event.key == pygame.K_ESCAPE:
+                from .main_menu_state import MainMenuState
                 game.set_state(MainMenuState())
 
     def update(self, game: 'Game') -> None:

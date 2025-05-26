@@ -2,10 +2,6 @@ import pygame
 from typing import TYPE_CHECKING
 
 from .i_game_state import IGameState
-from .main_menu_state import MainMenuState
-
-
-from .playing_state import PlayingState
 from ...config import WINDOW_SIZE, WHITE, BLUE, BLACK, GRAY
 from ...models import Difficulty
 
@@ -67,15 +63,19 @@ class DifficultySelectState(IGameState):
                 if rect.collidepoint(x, y):
                     game.difficulty = difficulty
                     game.new_game()
+                    # Імпортуємо тут, щоб уникнути циркулярного імпорту
+                    from .playing_state import PlayingState
                     game.set_state(PlayingState())
                     return
 
             # Перевірка натискання на кнопку "Назад"
             if self.back_button and self.back_button[0].collidepoint(x, y):
+                from .main_menu_state import MainMenuState
                 game.set_state(MainMenuState())
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
+                from .main_menu_state import MainMenuState
                 game.set_state(MainMenuState())
 
     def update(self, game: 'Game') -> None:
