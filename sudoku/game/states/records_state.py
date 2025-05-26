@@ -238,8 +238,6 @@ class RecordsState(IGameState):
             for i, record in enumerate(self.records[self.scroll_offset:self.scroll_offset + self.records_per_page]):
                 y_pos = records_start_y + i * self.record_height
 
-                # ВАЖЛИВО: спочатку малюємо фон, потім текст
-                # Чергування кольору фону для кращої читабельності
                 if i % 2 == 1:
                     row_rect = pygame.Rect(50, y_pos - 2, WINDOW_SIZE[0] - 100, self.record_height)
                     pygame.draw.rect(surface, (245, 245, 245), row_rect)
