@@ -92,28 +92,52 @@ class RecordsState(IGameState):
         seconds = seconds % 60
         return f"{minutes:02d}:{seconds:02d}"
 
-    def _format_date(self, date_str: str) -> str:
+    def _format_date(self, record) -> str:
         """Форматує дату у читабельний вигляд"""
-        if not date_str or date_str == "None":
+        # Спочатку отримуємо дату з правильного атрибута
+        date_value = None
+
+        # Пробуємо різні атрибути в порядку пріоритету
+        if hasattr(record, 'date_completed') and record.date_completed:
+            date_value = record.date_completed
+        elif hasattr(record, 'created_at') and record.created_at:
+            date_value = record.created_at
+        elif hasattr(record, 'date_played') and record.date_played:
+            date_value = record.date_played
+        elif hasattr(record, 'timestamp') and record.timestamp:
+            date_value = record.timestamp
+
+        if not date_value or str(date_value) == "None":
             return "--"
 
         try:
-            # Спробуємо різні формати дати
+            # Якщо це вже об'єкт datetime
+            if isinstance(date_value, datetime):
+                return date_value.strftime("%d.%m.%Y %H:%M")
+
+            # Якщо це рядок, пробуємо його парсити
+            date_str = str(date_value)
+
+            # ISO формат з T
             if 'T' in date_str:
-                # ISO формат
                 date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
             else:
-                # Спробуємо стандартний формат SQLite
+                # Пробуємо стандартний формат SQLite
                 try:
                     date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
                 except ValueError:
-                    # Якщо не вдалося, спробуємо без часу
-                    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                    try:
+                        # Без часу
+                        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                    except ValueError:
+                        # Якщо нічого не спрацювало, повертаємо скорочений рядок
+                        return date_str[:16] if len(date_str) > 16 else date_str
 
             return date_obj.strftime("%d.%m.%Y %H:%M")
-        except:
-            # Якщо нічого не спрацювало, повертаємо оригінальний рядок
-            return date_str[:16] if len(date_str) > 16 else date_str
+
+        except Exception as e:
+            print(f"Error formatting date {date_value}: {e}")
+            return str(date_value)[:16] if len(str(date_value)) > 16 else str(date_value)
 
     def handle_event(self, event: pygame.event.Event, game: 'Game') -> None:
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -184,10 +208,12 @@ class RecordsState(IGameState):
             surface.blit(text_surface, text_rect)
 
         # Персональна статистика
-        if self.personal_stats:
+        if self.personal_stats and self.personal_stats.get('total_games', 0) > 0:
             stats_y = 130
-            stats_text = f"Ваша статистика: Зіграно ігор: {self.personal_stats.get('total_games', 0)}, " \
-                         f"Найкращий час: {self._format_time(self.personal_stats.get('best_time', 0))}"
+            total_games = self.personal_stats.get('total_games', 0)
+            avg_time = self.personal_stats.get('average_time', 0)
+            stats_text = f"Ваша статистика: Зіграно ігор: {total_games}, " \
+                         f"Середній час: {self._format_time(avg_time)}"
             stats_surface = game.small_font.render(stats_text, True, BLACK)
             surface.blit(stats_surface, (50, stats_y))
 
@@ -211,6 +237,12 @@ class RecordsState(IGameState):
 
             for i, record in enumerate(self.records[self.scroll_offset:self.scroll_offset + self.records_per_page]):
                 y_pos = records_start_y + i * self.record_height
+
+                # ВАЖЛИВО: спочатку малюємо фон, потім текст
+                # Чергування кольору фону для кращої читабельності
+                if i % 2 == 1:
+                    row_rect = pygame.Rect(50, y_pos - 2, WINDOW_SIZE[0] - 100, self.record_height)
+                    pygame.draw.rect(surface, (245, 245, 245), row_rect)
 
                 # Номер у загальному рейтингу
                 rank = self.scroll_offset + i + 1
@@ -237,19 +269,10 @@ class RecordsState(IGameState):
                 hints_text = header_font.render(str(record.hints_used), True, BLACK)
                 surface.blit(hints_text, (header_positions[3], y_pos))
 
-                # Дата
-                date_attr = getattr(record, 'created_at', None) or getattr(record, 'date_played', None) or getattr(
-                    record, 'timestamp', None)
-                if date_attr:
-                    date_text = header_font.render(self._format_date(str(date_attr)), True, BLACK)
-                else:
-                    date_text = header_font.render("--", True, BLACK)
+                # Дата - використовуємо виправлену функцію
+                date_text = header_font.render(self._format_date(record), True, BLACK)
                 surface.blit(date_text, (header_positions[4], y_pos))
 
-                # Чергування кольору фону для кращої читабельності
-                if i % 2 == 1:
-                    row_rect = pygame.Rect(50, y_pos - 2, WINDOW_SIZE[0] - 100, self.record_height)
-                    pygame.draw.rect(surface, (240, 240, 240), row_rect)
         else:
             # Повідомлення про відсутність рекордів
             no_records_text = game.font.render("Рекордів поки немає", True, GRAY)

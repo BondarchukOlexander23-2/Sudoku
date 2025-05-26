@@ -24,7 +24,6 @@ class MainMenuState(IGameState):
 
         buttons_data = [
             ("play", "Грати"),
-            ("continue", "Продовжити"),
             ("records", "Рекорди"),
             ("exit", "Вийти")
         ]
@@ -104,12 +103,6 @@ class MainMenuState(IGameState):
             # Вибір кольору кнопки
             button_color = BLUE
 
-            # Перевіряємо доступність кнопки "Продовжити"
-            if button_name == "continue":
-                if not game.has_saved_games():
-                    button_color = GRAY  # Неактивна кнопка
-
-            # Кнопка "Рекорди" тепер активна
 
             pygame.draw.rect(surface, button_color, rect)
             pygame.draw.rect(surface, BLACK, rect, 2)
