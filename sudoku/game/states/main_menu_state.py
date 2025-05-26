@@ -65,11 +65,19 @@ class MainMenuState(IGameState):
             from .difficulty_select_state import DifficultySelectState
             game.set_state(DifficultySelectState())
         elif button_name == "continue":
-            # TODO: Реалізувати завантаження збереженої гри з БД
-            pass
+            # Перевіряємо, чи є збережені ігри
+            if game.has_saved_games():
+                # Завантажуємо останню збережену гру
+                if game.load_saved_game():
+                    print("Гру успішно завантажено")
+                else:
+                    print("Помилка завантаження гри")
+            else:
+                print("Немає збережених ігор")
         elif button_name == "records":
-            # TODO: Реалізувати показ таблиці рекордів з БД
-            pass
+            # Активуємо показ таблиці рекордів
+            from .records_state import RecordsState
+            game.set_state(RecordsState())
         elif button_name == "exit":
             pygame.quit()
             sys.exit()
@@ -95,8 +103,13 @@ class MainMenuState(IGameState):
         for button_name, (rect, text_surface) in self.menu_buttons.items():
             # Вибір кольору кнопки
             button_color = BLUE
-            if button_name in ["continue", "records"]:
-                button_color = GRAY  # Неактивні кнопки
+
+            # Перевіряємо доступність кнопки "Продовжити"
+            if button_name == "continue":
+                if not game.has_saved_games():
+                    button_color = GRAY  # Неактивна кнопка
+
+            # Кнопка "Рекорди" тепер активна
 
             pygame.draw.rect(surface, button_color, rect)
             pygame.draw.rect(surface, BLACK, rect, 2)
