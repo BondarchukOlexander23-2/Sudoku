@@ -172,6 +172,6 @@ class SudokuRenderer:
         text_rect = text.get_rect(center=(game_area_center_x, game_area_center_y))
         surface.blit(text, text_rect)
 
-        subtext = self.small_font.render("Натисніть 'Н', щоб почати нову гру", True, WHITE)
+        subtext = self.small_font.render("Натисніть 'N', щоб почати нову гру", True, WHITE)
         subtext_rect = subtext.get_rect(center=(game_area_center_x, game_area_center_y + 40))
         surface.blit(subtext, subtext_rect)
