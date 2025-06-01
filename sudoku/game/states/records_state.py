@@ -31,33 +31,39 @@ class RecordsState(IGameState):
         self.header_height = 150
 
     def _initialize_buttons(self, font, small_font):
-        """Ініціалізує кнопки інтерфейсу"""
-        # Кнопки фільтрів по складності
-        button_width = 120
-        button_spacing = 10
-        total_width = len(Difficulty) * button_width + (len(Difficulty) - 1) * button_spacing
-        start_x = (WINDOW_SIZE[0] - total_width) // 2
+        difficulties = [None] + list(Difficulty)  # None = "Всі рівні"
+        button_count = len(difficulties)
+        total_spacing = 20  # Загальний простір між кнопками
 
-        # Словник для перекладу назв рівнів складності
+        # Визначаємо ширину кнопки як частину від загальної ширини вікна
+        max_total_button_width = WINDOW_SIZE[0] * 0.9  # 90% ширини вікна
+        spacing = 10
+        button_width = (max_total_button_width - spacing * (button_count - 1)) // button_count
+        start_x = (WINDOW_SIZE[0] - ((button_width + spacing) * button_count - spacing)) // 2
+
+        # Відображувані назви
         difficulty_names = {
+            None: "Всі рівні",
             Difficulty.EASY: "Легкий",
             Difficulty.MEDIUM: "Середній",
             Difficulty.HARD: "Важкий"
         }
 
-        for i, difficulty in enumerate(Difficulty):
-            x = start_x + i * (button_width + button_spacing)
+        # Створюємо кнопки
+        self.difficulty_buttons = {}
+        for i, difficulty in enumerate(difficulties):
+            x = start_x + i * (button_width + spacing)
             rect = pygame.Rect(x, 80, button_width, self.button_height)
-            text = difficulty_names.get(difficulty, difficulty.name.capitalize())
+
+            if difficulty is not None:
+                text = difficulty_names.get(difficulty, difficulty.name.capitalize())
+            else:
+                text = "Всі рівні"
+
             text_surface = small_font.render(text, True, WHITE)
             self.difficulty_buttons[difficulty] = (rect, text_surface)
 
-        # Кнопка "Всі рівні"
-        all_rect = pygame.Rect(start_x - button_width - button_spacing, 80, button_width, self.button_height)
-        all_text = small_font.render("Всі рівні", True, WHITE)
-        self.difficulty_buttons[None] = (all_rect, all_text)
-
-        # Кнопка "Назад"
+        # Кнопка "Назад" — фіксовано зліва внизу
         self.back_button = (
             pygame.Rect(50, WINDOW_SIZE[1] - 60, 100, self.button_height),
             small_font.render("Назад", True, WHITE)
@@ -184,100 +190,102 @@ class RecordsState(IGameState):
         """Відображення таблиці рекордів"""
         surface.fill(WHITE)
 
-        # Ініціалізуємо кнопки, якщо потрібно
+        # ✅ Ініціалізація кнопок при першому рендері
         if not self.difficulty_buttons:
             self._initialize_buttons(game.font, game.small_font)
 
-        # Заголовок
-        title_text = game.font.render("ТАБЛИЦЯ РЕКОРДІВ", True, BLACK)
+        # ✅ Винесено в окремі методи для читабельності
+        self._render_title(surface, game.font)  # додано метод для заголовка
+        self._render_difficulty_buttons(surface, game.small_font)  #  кнопки рівня складності
+        self._render_personal_stats(surface, game.small_font)  #  персональна статистика
+        self._render_table_headers(surface, game.small_font)  #  заголовки таблиці
+        self._render_records(surface, game.small_font)  #  самі записи
+        self._render_back_button(surface)  #  кнопка "Назад"
+        self._render_scroll_info(surface, game.small_font)  #  інформація про прокрутку
+
+    # ✅ Відображення заголовка таблиці
+    def _render_title(self, surface, font):
+        title_text = font.render("ТАБЛИЦЯ РЕКОРДІВ", True, BLACK)
         title_rect = title_text.get_rect(center=(WINDOW_SIZE[0] // 2, 30))
         surface.blit(title_text, title_rect)
 
-        # Кнопки фільтрів
+    # ✅ Відображення кнопок вибору складності (Easy, Medium, Hard)
+    def _render_difficulty_buttons(self, surface, font):
         for difficulty, (rect, text_surface) in self.difficulty_buttons.items():
-            # Вибір кольору кнопки
-            if difficulty == self.selected_difficulty:
-                color = GREEN
-            else:
-                color = BLUE
-
+            color = GREEN if difficulty == self.selected_difficulty else BLUE  # 👉 підсвітка вибраної складності
             pygame.draw.rect(surface, color, rect)
             pygame.draw.rect(surface, BLACK, rect, 2)
-
             text_rect = text_surface.get_rect(center=rect.center)
             surface.blit(text_surface, text_rect)
 
-        # Персональна статистика
+    # ✅ Персональна статистика гравця (ігри + середній час)
+    def _render_personal_stats(self, surface, font):
         if self.personal_stats and self.personal_stats.get('total_games', 0) > 0:
             stats_y = 130
             total_games = self.personal_stats.get('total_games', 0)
             avg_time = self.personal_stats.get('average_time', 0)
-            stats_text = f"Ваша статистика: Зіграно ігор: {total_games}, " \
-                         f"Середній час: {self._format_time(avg_time)}"
-            stats_surface = game.small_font.render(stats_text, True, BLACK)
+            stats_text = f"Ваша статистика: Зіграно ігор: {total_games}, Середній час: {self._format_time(avg_time)}"
+            stats_surface = font.render(stats_text, True, BLACK)
             surface.blit(stats_surface, (50, stats_y))
 
-        # Заголовки таблиці
-        headers_y = self.header_height + 20
-        header_font = game.small_font
-
+    # ✅ Заголовки колонок таблиці ("#", "Час", тощо)
+    def _render_table_headers(self, surface, font):
         headers = ["#", "Час", "Рівень", "Підказок", "Дата"]
         header_positions = [80, 150, 220, 320, 400]
+        headers_y = self.header_height + 20
 
-        for i, (header, x_pos) in enumerate(zip(headers, header_positions)):
-            header_surface = header_font.render(header, True, BLACK)
+        for header, x_pos in zip(headers, header_positions):
+            header_surface = font.render(header, True, BLACK)
             surface.blit(header_surface, (x_pos, headers_y))
 
-        # Лінія під заголовками
+        #  лінія під заголовками
         pygame.draw.line(surface, GRAY, (50, headers_y + 25), (WINDOW_SIZE[0] - 50, headers_y + 25), 2)
 
-        # Відображення рекордів
-        if self.records:
-            records_start_y = headers_y + 35
-
-            for i, record in enumerate(self.records[self.scroll_offset:self.scroll_offset + self.records_per_page]):
-                y_pos = records_start_y + i * self.record_height
-
-                if i % 2 == 1:
-                    row_rect = pygame.Rect(50, y_pos - 2, WINDOW_SIZE[0] - 100, self.record_height)
-                    pygame.draw.rect(surface, (245, 245, 245), row_rect)
-
-                # Номер у загальному рейтингу
-                rank = self.scroll_offset + i + 1
-                rank_text = header_font.render(str(rank), True, BLACK)
-                surface.blit(rank_text, (header_positions[0], y_pos))
-
-                # Час
-                time_text = header_font.render(self._format_time(record.completion_time), True, BLACK)
-                surface.blit(time_text, (header_positions[1], y_pos))
-
-                # Рівень складності
-                difficulty_names = {
-                    Difficulty.EASY: "Легкий",
-                    Difficulty.MEDIUM: "Середній",
-                    Difficulty.HARD: "Важкий"
-                }
-                diff_text = header_font.render(
-                    difficulty_names.get(record.difficulty, record.difficulty.name.capitalize()),
-                    True, BLACK
-                )
-                surface.blit(diff_text, (header_positions[2], y_pos))
-
-                # Кількість підказок
-                hints_text = header_font.render(str(record.hints_used), True, BLACK)
-                surface.blit(hints_text, (header_positions[3], y_pos))
-
-                # Дата - використовуємо виправлену функцію
-                date_text = header_font.render(self._format_date(record), True, BLACK)
-                surface.blit(date_text, (header_positions[4], y_pos))
-
-        else:
-            # Повідомлення про відсутність рекордів
-            no_records_text = game.font.render("Рекордів поки немає", True, GRAY)
+    # ✅ Основна таблиця рекордів
+    def _render_records(self, surface, font):
+        if not self.records:
+            # 👉 Повідомлення, якщо записів немає
+            no_records_text = font.render("Рекордів поки немає", True, GRAY)
             no_records_rect = no_records_text.get_rect(center=(WINDOW_SIZE[0] // 2, WINDOW_SIZE[1] // 2))
             surface.blit(no_records_text, no_records_rect)
+            return
 
-        # Кнопка "Назад"
+        records_start_y = self.header_height + 55
+        difficulty_names = {
+            Difficulty.EASY: "Легкий",
+            Difficulty.MEDIUM: "Середній",
+            Difficulty.HARD: "Важкий"
+        }
+        header_positions = [80, 150, 220, 320, 400]
+
+        for i, record in enumerate(self.records[self.scroll_offset:self.scroll_offset + self.records_per_page]):
+            y_pos = records_start_y + i * self.record_height
+
+            if i % 2 == 1:
+                #  Чергування кольору рядків для зручності читання
+                row_rect = pygame.Rect(50, y_pos - 2, WINDOW_SIZE[0] - 100, self.record_height)
+                pygame.draw.rect(surface, (245, 245, 245), row_rect)
+
+            #  Дані для кожного запису
+            rank_text = font.render(str(self.scroll_offset + i + 1), True, BLACK)
+            surface.blit(rank_text, (header_positions[0], y_pos))
+
+            time_text = font.render(self._format_time(record.completion_time), True, BLACK)
+            surface.blit(time_text, (header_positions[1], y_pos))
+
+            # Перевірка .get() у разі None, щоб уникнути AttributeError
+            difficulty = difficulty_names.get(record.difficulty, str(record.difficulty))
+            diff_text = font.render(difficulty, True, BLACK)
+            surface.blit(diff_text, (header_positions[2], y_pos))
+
+            hints_text = font.render(str(record.hints_used), True, BLACK)
+            surface.blit(hints_text, (header_positions[3], y_pos))
+
+            date_text = font.render(self._format_date(record), True, BLACK)
+            surface.blit(date_text, (header_positions[4], y_pos))
+
+    # ✅ Відображення кнопки "Назад"
+    def _render_back_button(self, surface):
         if self.back_button:
             rect, text_surface = self.back_button
             pygame.draw.rect(surface, BLUE, rect)
@@ -285,10 +293,9 @@ class RecordsState(IGameState):
             text_rect = text_surface.get_rect(center=rect.center)
             surface.blit(text_surface, text_rect)
 
-        # Індикатор прокрутки, якщо потрібно
+    # ✅ Інформація про поточну сторінку (наприклад: Записи 1–10 з 25)
+    def _render_scroll_info(self, surface, font):
         if len(self.records) > self.records_per_page:
-            scroll_info = game.small_font.render(
-                f"Записи {self.scroll_offset + 1}-{min(self.scroll_offset + self.records_per_page, len(self.records))} з {len(self.records)}",
-                True, GRAY
-            )
-            surface.blit(scroll_info, (WINDOW_SIZE[0] - 250, WINDOW_SIZE[1] - 30))
+            scroll_text = f"Записи {self.scroll_offset + 1}-{min(self.scroll_offset + self.records_per_page, len(self.records))} з {len(self.records)}"
+            scroll_surface = font.render(scroll_text, True, GRAY)
+            surface.blit(scroll_surface, (WINDOW_SIZE[0] - 250, WINDOW_SIZE[1] - 30))
