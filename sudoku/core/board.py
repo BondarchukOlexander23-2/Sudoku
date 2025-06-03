@@ -33,16 +33,27 @@ class ISudokuBoard(ABC):
         """Повертає підказку для поточної позиції"""
         pass
 
+class EmptyCellSelectorStrategy:
+    """Стратегія для пошуку порожньої клітинки"""
+    def select(self, grid: List[List[Cell]]) -> Optional[Tuple[int, int]]:
+        empty_cells = [
+            (row, col)
+            for row in range(GRID_SIZE)
+            for col in range(GRID_SIZE)
+            if grid[row][col].value == 0
+        ]
+        return random.choice(empty_cells) if empty_cells else None
+
 
 class SudokuBoard(ISudokuBoard):
-    """Клас для представлення дошки судоку"""
-    def __init__(self, generator: ISudokuGenerator):
+    def __init__(self, generator: ISudokuGenerator, selector: Optional[EmptyCellSelectorStrategy] = None):
         self.generator = generator
-        self.grid: List[List[Cell]] = [[Cell(row, col) for col in range(GRID_SIZE)] for row in range(GRID_SIZE)]
+        self.grid = [[Cell(row, col) for col in range(GRID_SIZE)] for row in range(GRID_SIZE)]
         self.solution = None
         self.validator = SudokuValidator()
         self.hints_used = 0
         self.max_hints = MAX_HINTS
+        self.cell_selector = selector or EmptyCellSelectorStrategy()
 
     def initialize(self, difficulty: Difficulty) -> None:
         """Ініціалізує нову дошку судоку"""
@@ -90,20 +101,12 @@ class SudokuBoard(ISudokuBoard):
         if self.hints_used >= self.max_hints:
             return None
 
-        # Пошук незаповненої клітинки
-        empty_cells = []
-        for row in range(GRID_SIZE):
-            for col in range(GRID_SIZE):
-                if self.grid[row][col].value == 0:
-                    empty_cells.append((row, col))
-
-        if not empty_cells:
+        selected = self.cell_selector.select(self.grid)
+        if not selected:
             return None
 
-        # Вибір випадкової клітинки і надання підказки
-        row, col = random.choice(empty_cells)
+        row, col = selected
         correct_value = self.solution[row][col]
-
         self.hints_used += 1
         return row, col, correct_value
 

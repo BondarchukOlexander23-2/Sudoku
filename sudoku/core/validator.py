@@ -9,59 +9,47 @@ from ..models import Cell
 
 class SudokuValidator:
     """Клас для валідації судоку"""
+
     @staticmethod
     def is_valid_move(grid: List[List[Cell]], row: int, col: int, value: int) -> bool:
         """Перевіряє, чи є хід правильним"""
-        if value == 0:  # Видалення значення завжди дозволено
+        if value == 0:
             return True
-
-        if not SudokuValidator.__is_column_valid_move(grid, row, col, value):
-            return False
-
-        if not SudokuValidator.__is_row_valid_move(grid, row, col, value):
-            return False
-
-        if not SudokuValidator.__is_block_valid_move(grid, row, col, value):
-            return False
-
-        return True
+        return all([
+            SudokuValidator.__is_column_valid_move(grid, row, col, value),
+            SudokuValidator.__is_row_valid_move(grid, row, col, value),
+            SudokuValidator.__is_block_valid_move(grid, row, col, value)
+        ])
 
     @staticmethod
     def is_board_valid(grid: List[List[Cell]]) -> bool:
         """Перевіряє, чи є поточний стан дошки правильним"""
-        if not SudokuValidator.__is_row_valid_board(grid):
-            return False
-
-        if not SudokuValidator.__is_column_valid_board(grid):
-            return False
-
-        if not SudokuValidator.__is_block_valid_board(grid):
-            return False
-
-        return True
+        return all([
+            SudokuValidator.__is_row_valid_board(grid),
+            SudokuValidator.__is_column_valid_board(grid),
+            SudokuValidator.__is_block_valid_board(grid)
+        ])
 
     @staticmethod
     def is_board_complete(grid: List[List[Cell]]) -> bool:
         """Перевіряє, чи заповнена вся дошка без нулів"""
-        for row in range(GRID_SIZE):
-            for col in range(GRID_SIZE):
-                if grid[row][col].value == 0:
-                    return False
-        return True
+        return all(grid[row][col].value != 0 for row in range(GRID_SIZE) for col in range(GRID_SIZE))
 
     @staticmethod
-    def __is_column_valid_move(grid: List[List[Cell]], row: int, col: int, value: int) -> bool:
-        for i in range(GRID_SIZE):
-            if i != col and grid[row][i].value == value:
-                return False
-        return True
+    def __has_unique_values(values: List[int]) -> bool:
+        return len(values) == len(set(values))
 
     @staticmethod
-    def __is_row_valid_move(grid: List[List[Cell]], row: int, col: int, value: int) -> bool:
-        for i in range(GRID_SIZE):
-            if i != row and grid[i][col].value == value:
-                return False
-        return True
+    def __is_column_valid_board(grid: List[List[Cell]]) -> bool:
+        return all(SudokuValidator.__has_unique_values(
+            [grid[row][col].value for row in range(GRID_SIZE) if grid[row][col].value != 0])
+                   for col in range(GRID_SIZE))
+
+    @staticmethod
+    def __is_row_valid_board(grid: List[List[Cell]]) -> bool:
+        return all(SudokuValidator.__has_unique_values(
+            [grid[row][col].value for col in range(GRID_SIZE) if grid[row][col].value != 0])
+                   for row in range(GRID_SIZE))
 
     @staticmethod
     def __is_block_valid_move(grid: List[List[Cell]], row: int, col: int, value: int) -> bool:
