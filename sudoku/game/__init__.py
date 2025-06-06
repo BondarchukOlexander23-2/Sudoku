@@ -8,5 +8,7 @@ from .states.paused_state import PausedState
 from .states.playing_state import PlayingState
 
 from .timer import GameTimer
+from .game_builder import GameBuilder  # ДОДАТИ
+from .game_facade import GameFacade    # ДОДАТИ
 
-__all__ = ['Game', 'IGameState', 'PlayingState', 'GameOverState', 'PausedState', 'GameTimer']
+__all__ = ['Game', 'IGameState', 'PlayingState', 'GameOverState', 'PausedState', 'GameTimer', 'GameBuilder', 'GameFacade']  # ОНОВИТИ

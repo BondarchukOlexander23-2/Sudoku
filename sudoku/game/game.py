@@ -8,15 +8,15 @@ from sudoku.game.states.paused_state import PausedState
 from sudoku.game.states.playing_state import PlayingState
 from sudoku.game.states.i_game_state import IGameState
 
-from sudoku.config import WINDOW_SIZE, GRID_SIZE
-from sudoku.models import Difficulty, Cell
-from sudoku.core import SudokuGenerator, SudokuBoard
-from sudoku.ui import SudokuRenderer, ButtonManager
-from sudoku.game.timer import GameTimer
+from sudoku.config import GRID_SIZE
+from sudoku.models import Difficulty
+from sudoku.game.game_builder import GameBuilder
+from sudoku.game.game_facade import GameFacade
 from sudoku.game.database_integration import GameDatabaseManager
 
 # Константа замість магічного числа
 FPS = 30
+
 
 # ✳️ Хелпер для безпечного доступу до бази даних
 class DatabaseHelper:
@@ -38,47 +38,38 @@ class Game:
     """Основний клас гри з підтримкою бази даних"""
 
     def __init__(self, db_path: Optional[str] = None):
-        pygame.init()
-        self._init_pygame_ui()
-        self._init_fonts()
+        # Використовуємо Builder для створення компонентів
+        components = (GameBuilder()
+                      .build_pygame()
+                      .build_fonts()
+                      .build_components()
+                      .build_database(db_path)
+                      .build())
 
-        self.db_manager = GameDatabaseManager(db_path) if db_path else None
+        # Ініціалізуємо атрибути з Builder
+        self.window_size = components['window_size']
+        self.surface = components['surface']
+        self.font = components['font']
+        self.small_font = components['small_font']
+        self.generator = components['generator']
+        self.board = components['board']
+        self.renderer = components['renderer']
+        self.button_manager = components['button_manager']
+        self.timer = components['timer']
+        self.db_manager = components['db_manager']
+
+        # Створюємо хелпер та фасад
         self.db = DatabaseHelper(self.db_manager)
+        self.facade = GameFacade(self.db, self.board, self.timer)
 
-        self._init_game_components()
-        self._load_user_settings()
+        # Ініціалізуємо налаштування через фасад
+        self.facade.initialize_game_settings()
 
+        # Ігрові атрибути
         self.selected_cell: Optional[Tuple[int, int]] = None
-        self.difficulty = self._get_preferred_difficulty()
+        self.difficulty = self.facade.get_preferred_difficulty()
         self.state: IGameState = MainMenuState()
         self.game_initialized = False
-
-    def _init_pygame_ui(self):
-        self.window_size = WINDOW_SIZE
-        self.surface = pygame.display.set_mode(self.window_size)
-        pygame.display.set_caption('Судоку')
-
-    def _init_fonts(self):
-        self.font = pygame.font.SysFont('Comic Sans MS', 32)
-        self.small_font = pygame.font.SysFont('Comic Sans MS', 16)
-
-    def _init_game_components(self):
-        self.generator = SudokuGenerator()
-        self.board = SudokuBoard(self.generator)
-        self.renderer = SudokuRenderer(self.font, self.small_font)
-        self.button_manager = ButtonManager(self.small_font)
-        self.timer = GameTimer()
-
-    def _load_user_settings(self):
-        max_hints = self.db.execute(lambda db: db.get_max_hints())
-        if max_hints is not None:
-            self.board.max_hints = max_hints
-
-    def _get_preferred_difficulty(self) -> Difficulty:
-        pref = self.db.execute(lambda db: db.get_user_setting('preferred_difficulty'))
-        if pref:
-            return Difficulty[pref]
-        return Difficulty.MEDIUM
 
     def _initialize_game_ui(self):
         if not self.game_initialized:
@@ -93,42 +84,21 @@ class Game:
         self.timer.reset()
 
     def save_current_game(self) -> bool:
-        return self.db.execute(lambda db: db.save_current_game(
-            self.difficulty,
-            self.board.grid,
-            self.board.solution,
-            self.timer.get_time() // 1000,
-            self.board.hints_used
-        ), False)
+        return self.facade.save_game_state(self.difficulty)
 
     def load_saved_game(self, game_id: Optional[int] = None) -> bool:
-        def load(db):
-            saved = (db.saved_game_service.load_game(game_id)
-                     if game_id else db.load_latest_game())
-            if not saved:
-                return False
-            self._load_saved_data(saved)
-            return True
+        saved = self.facade.load_game_state(game_id)
+        if not saved:
+            return False
 
-        return self.db.execute(load, False)
-
-    def _load_saved_data(self, saved):
         self.difficulty = saved.difficulty
-        self.board.difficulty = saved.difficulty
-        self.board.solution = saved.solution
-        self.board.hints_used = saved.hints_used
-        self.board.grid = [[Cell.from_dict(c) for c in row] for row in saved.current_state]
-
-        self.timer.elapsed_time = saved.elapsed_time * 1000
-        self.timer.start()
+        self.facade.setup_board_from_saved(saved, saved.difficulty)
+        self.facade.setup_timer_from_saved(saved)
         self.set_state(PlayingState())
+        return True
 
     def complete_game(self):
-        self.db.execute(lambda db: db.save_game_record(
-            self.difficulty,
-            self.timer.get_time() // 1000,
-            self.board.hints_used
-        ))
+        self.facade.complete_game(self.difficulty)
 
     def pause_game(self):
         if isinstance(self.state, PlayingState):
@@ -194,3 +164,13 @@ class Game:
             if self.db_manager:
                 self.db_manager.close()
             pygame.quit()
+
+    # Додаткові методи для сумісності з states
+    def get_leaderboard(self, difficulty=None, limit=10):
+        return self.db.execute(lambda db: db.get_leaderboard(difficulty, limit), [])
+
+    def get_personal_stats(self):
+        return self.db.execute(lambda db: db.get_personal_stats(), {})
+
+    def has_saved_games(self):
+        return self.db.execute(lambda db: db.has_saved_games(), False)
