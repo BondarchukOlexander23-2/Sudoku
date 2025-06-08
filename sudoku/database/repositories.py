@@ -2,30 +2,43 @@
 Інтерфейси репозиторіїв для роботи з даними
 """
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Generic, TypeVar
 from datetime import datetime
 
 from .models import GameRecord, SavedGame, UserSetting
 from ..models import Difficulty
 
+# Узагальнені типи
+T = TypeVar('T')  # Тип сутності
+K = TypeVar('K')  # Тип ключа (ID)
 
-class IGameRecordRepository(ABC):
+
+class IRepository(ABC, Generic[T, K]):
+    """Базовий інтерфейс репозиторію"""
+
+    @abstractmethod
+    def save(self, entity: T) -> K:
+        """Зберігає сутність і повертає її ідентифікатор"""
+        pass
+
+    @abstractmethod
+    def get_by_id(self, entity_id: K) -> Optional[T]:
+        """Отримує сутність за ідентифікатором"""
+        pass
+
+    @abstractmethod
+    def get_all(self) -> List[T]:
+        """Отримує всі сутності"""
+        pass
+
+    @abstractmethod
+    def delete(self, entity_id: K) -> bool:
+        """Видаляє сутність за ідентифікатором"""
+        pass
+
+
+class IGameRecordRepository(IRepository[GameRecord, int], ABC):
     """Інтерфейс репозиторію для рекордів ігор"""
-
-    @abstractmethod
-    def save(self, record: GameRecord) -> int:
-        """Зберігає запис про гру і повертає ID"""
-        pass
-
-    @abstractmethod
-    def get_by_id(self, record_id: int) -> Optional[GameRecord]:
-        """Отримує запис за ID"""
-        pass
-
-    @abstractmethod
-    def get_all(self) -> List[GameRecord]:
-        """Отримує всі записи"""
-        pass
 
     @abstractmethod
     def get_by_difficulty(self, difficulty: Difficulty) -> List[GameRecord]:
@@ -37,29 +50,9 @@ class IGameRecordRepository(ABC):
         """Отримує топ результатів"""
         pass
 
-    @abstractmethod
-    def delete(self, record_id: int) -> bool:
-        """Видаляє запис"""
-        pass
 
-
-class ISavedGameRepository(ABC):
+class ISavedGameRepository(IRepository[SavedGame, int], ABC):
     """Інтерфейс репозиторію для збережених ігор"""
-
-    @abstractmethod
-    def save(self, game: SavedGame) -> int:
-        """Зберігає гру і повертає ID"""
-        pass
-
-    @abstractmethod
-    def get_by_id(self, game_id: int) -> Optional[SavedGame]:
-        """Отримує збережену гру за ID"""
-        pass
-
-    @abstractmethod
-    def get_all(self) -> List[SavedGame]:
-        """Отримує всі збережені ігри"""
-        pass
 
     @abstractmethod
     def get_latest(self) -> Optional[SavedGame]:
@@ -71,19 +64,9 @@ class ISavedGameRepository(ABC):
         """Оновлює збережену гру"""
         pass
 
-    @abstractmethod
-    def delete(self, game_id: int) -> bool:
-        """Видаляє збережену гру"""
-        pass
 
-
-class IUserSettingsRepository(ABC):
+class IUserSettingsRepository(IRepository[UserSetting, str], ABC):
     """Інтерфейс репозиторію для налаштувань користувача"""
-
-    @abstractmethod
-    def save(self, setting: UserSetting) -> int:
-        """Зберігає налаштування"""
-        pass
 
     @abstractmethod
     def get_by_name(self, name: str) -> Optional[UserSetting]:
@@ -91,16 +74,6 @@ class IUserSettingsRepository(ABC):
         pass
 
     @abstractmethod
-    def get_all(self) -> List[UserSetting]:
-        """Отримує всі налаштування"""
-        pass
-
-    @abstractmethod
     def update(self, setting: UserSetting) -> bool:
         """Оновлює налаштування"""
-        pass
-
-    @abstractmethod
-    def delete(self, name: str) -> bool:
-        """Видаляє налаштування"""
         pass
